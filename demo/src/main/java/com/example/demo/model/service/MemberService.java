@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -59,7 +60,7 @@ public class MemberService implements UserDetailsService {
         return memberRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
     }
 
-    private static final List<String> ROLES = List.of("USER", "ADMIN");
+    private static final List<String> ROLES = List.of("USER", "ADMIN","MANAGER"); // 허용된 권한 목록
     @PreAuthorize("hasRole('ADMIN')") // 관리자만 실행 가능 (2차 잠금)
     public void changeRole(Long id, String role) { // 권한 변경
         if (!ROLES.contains(role)) { // 허용된 권한만
@@ -67,6 +68,11 @@ public class MemberService implements UserDetailsService {
         }
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        if (member.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("본인의 권한은 변경할 수 없습니다.");
+        }
         member.setRole(role);
         memberRepository.save(member); // UPDATE (id 가 있으면 수정)
     }
@@ -74,6 +80,13 @@ public class MemberService implements UserDetailsService {
     public void deleteMember(Long id) { // 회원 삭제
         Member member = memberRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                    
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        if (member.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("본인 계정은 삭제할 수 없습니다.");
+        }
+
         memberRepository.delete(member); // DELETE
     }
 }

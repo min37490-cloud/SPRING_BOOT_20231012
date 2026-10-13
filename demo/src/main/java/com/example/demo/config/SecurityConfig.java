@@ -26,6 +26,8 @@ public class SecurityConfig {
                     "/login", "/signup", "/error").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN") // [6주차] 관리자만
+                .requestMatchers("/testdb").hasAnyRole("ADMIN", "MANAGER")
+
                 .anyRequest().authenticated())
             .formLogin(form -> form // 2. 폼 로그인 설정 (인증)
                 .loginPage("/login")
