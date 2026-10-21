@@ -3,11 +3,16 @@ package com.example.demo.config;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 
 @Configuration // 스프링 설정 클래스 등록
@@ -25,9 +30,10 @@ public class SecurityConfig {
                 .requestMatchers("/", "/hello", "/detailed_web.html",
                     "/login", "/signup", "/error").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN") // [6주차] 관리자만
+                //.requestMatchers("/admin/**").hasRole("ADMIN") // [6주차] 관리자만
+                .requestMatchers("/admin/**","/api/admin/**").hasRole("ADMIN")  
                 .requestMatchers("/testdb").hasAnyRole("ADMIN", "MANAGER")
-
+                .requestMatchers("/api/hello").permitAll()
                 .anyRequest().authenticated())
             .formLogin(form -> form // 2. 폼 로그인 설정 (인증)
                 .loginPage("/login")
@@ -42,7 +48,13 @@ public class SecurityConfig {
             .rememberMe(remember -> remember
                 .key("mySecretRememberKey123") // 토큰 생성용 고유 비밀키 (임의의 고유 문자열)
                 .tokenValiditySeconds(7 * 24 * 60 * 60) // 7일 (초 단위: 604,800초)
-                .rememberMeParameter("remember-me")); // login.html 체크박스 name (기본값: remember-me)
+                .rememberMeParameter("remember-me"))
+                .httpBasic(Customizer.withDefaults()) // Postman : 요청마다 아이디·비밀번호 (Basic 인증)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")) // JSON API 는 CSRF 토큰 검사 제외
+                .exceptionHandling(ex -> ex.defaultAuthenticationEntryPointFor( // 로그인 안 한 API 요청 :
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), // 로그인 화면(302) 대신 401
+                    request -> request.getRequestURI().startsWith("/api/")));
+                    // login.html 체크박스 name (기본값: remember-me)
         return http.build();
     }
 }

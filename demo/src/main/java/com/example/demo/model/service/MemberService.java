@@ -1,6 +1,7 @@
 package com.example.demo.model.service;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -22,7 +23,12 @@ public class MemberService implements UserDetailsService {
     private MemberRepository memberRepository;
     @Autowired // SecurityConfig 에 등록한 BCryptPasswordEncoder 주입
     private PasswordEncoder passwordEncoder;
+    private boolean isBlank(String value) { return value == null || value.isBlank(); } // 클래스 아래쪽
+    
     public Member signup(MemberForm form) { // 회원가입
+        if (isBlank(form.getUsername()) || isBlank(form.getPassword()) || isBlank(form.getName())) {
+        throw new IllegalArgumentException("아이디, 비밀번호, 이름은 필수입니다.");
+        }
         if (form.getPassword() == null || !form.getPassword().equals(form.getPasswordConfirm())) {
             // 예외 발생 시 하단의 DB 저장(save) 코드로 이동하지 않음 (DB 저장 안 됨)
             // 컨트롤러의 catch (IllegalArgumentException e)로 메시지 전달됨
@@ -62,7 +68,7 @@ public class MemberService implements UserDetailsService {
 
     private static final List<String> ROLES = List.of("USER", "ADMIN","MANAGER"); // 허용된 권한 목록
     @PreAuthorize("hasRole('ADMIN')") // 관리자만 실행 가능 (2차 잠금)
-    public void changeRole(Long id, String role) { // 권한 변경
+    public Member changeRole(Long id, String role) { // 권한 변경
         if (!ROLES.contains(role)) { // 허용된 권한만
             throw new IllegalArgumentException("허용되지 않는 권한입니다 : " + role);
         }
@@ -74,7 +80,7 @@ public class MemberService implements UserDetailsService {
             throw new IllegalArgumentException("본인의 권한은 변경할 수 없습니다.");
         }
         member.setRole(role);
-        memberRepository.save(member); // UPDATE (id 가 있으면 수정)
+        return memberRepository.save(member); // UPDATE (id 가 있으면 수정)
     }
     @PreAuthorize("hasRole('ADMIN')") // 관리자만 실행 가능 (2차 잠금)
     public void deleteMember(Long id) { // 회원 삭제
@@ -88,5 +94,8 @@ public class MemberService implements UserDetailsService {
         }
 
         memberRepository.delete(member); // DELETE
+    }
+    public Optional<Member> findById(Long id) {
+        return memberRepository.findById(id);
     }
 }
