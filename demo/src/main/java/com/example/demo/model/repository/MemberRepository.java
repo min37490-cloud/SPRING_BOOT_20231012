@@ -1,4 +1,6 @@
 package com.example.demo.model.repository;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -9,4 +11,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByUsername(String username);
     // 아이디 중복 확인 (존재하면 true)
     boolean existsByUsername(String username);
+    List<Member> findByUsernameContainingOrNameContaining(String username, String name);
 }

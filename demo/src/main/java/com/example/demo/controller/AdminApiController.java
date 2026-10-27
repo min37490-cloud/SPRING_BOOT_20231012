@@ -1,4 +1,4 @@
-package com.example.demo.controller;
+/*package com.example.demo.controller;
 
 import java.net.URI;
 import java.util.List;
@@ -56,5 +56,61 @@ public class AdminApiController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+}*/
+
+package com.example.demo.controller;
+
+import java.net.URI;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.example.demo.model.domain.Member;
+import com.example.demo.model.dto.MemberForm;
+import com.example.demo.model.dto.MemberResponse;
+import com.example.demo.model.dto.RoleRequest;
+import com.example.demo.model.service.MemberService;
+
+@RestController
+@RequestMapping("/api/admin/members")
+public class AdminApiController {
+
+    @Autowired
+    MemberService memberService;
+
+    // ① [수정] 회원 목록 + 검색 기능 추가
+    @GetMapping
+    public List<MemberResponse> list(@RequestParam(name = "keyword", required = false) String keyword) {
+        List<Member> members = memberService.searchMembers(keyword);
+        return members.stream().map(MemberResponse::from).toList();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberResponse> get(@PathVariable Long id) {
+        return memberService.findById(id)
+            .map(member -> ResponseEntity.ok(MemberResponse.from(member)))
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ② [수정] try-catch 제거
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody MemberForm form) {
+        Member saved = memberService.signup(form);
+        return ResponseEntity
+                .created(URI.create("/api/admin/members/" + saved.getId()))
+                .body(MemberResponse.from(saved));
+    }
+
+    @PatchMapping("/{id}/role")
+    public ResponseEntity<?> changeRole(@PathVariable Long id, @RequestBody RoleRequest request) {
+        Member member = memberService.changeRole(id, request.role());
+        return ResponseEntity.ok(MemberResponse.from(member));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        memberService.deleteMember(id);
+        return ResponseEntity.noContent().build();
     }
 }

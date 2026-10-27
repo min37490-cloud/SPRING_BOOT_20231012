@@ -98,4 +98,10 @@ public class MemberService implements UserDetailsService {
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
     }
+    public List<Member> searchMembers(String keyword) {
+        if (isBlank(keyword)) {
+            return findAll(); // 검색어가 없으면 기존 전체 조회(id 오름차순) 실행
+        }
+        return memberRepository.findByUsernameContainingOrNameContaining(keyword, keyword);
+    }
 }
