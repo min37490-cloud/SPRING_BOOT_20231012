@@ -2,6 +2,7 @@ package com.example.demo.model.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,10 @@ public class PostService {
     }
     public List<Post> findAll() { // 전체 목록 (최신 글이 위로)
         return postRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        }
+    }
+    public List<Post> findMyPosts(String username) {
+        return postRepository.findByAuthor_UsernameOrderByIdDesc(username);
+    }
     public Post write(PostForm form, String username) { // 글쓰기 (작성자 = 로그인한 회원)
         validate(form);
         Member author = memberRepository.findByUsername(username)
@@ -60,6 +64,13 @@ public class PostService {
         return postRepository.findById(id)
                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "글이 존재하지 않습니다."));
     }
+    @Transactional
+    public Post read(Long id) {
+        Post post = findById(id);           // 기존 메서드 재사용
+        post.setViewCount(post.getViewCount() + 1);  // viewCount += 1
+        return post;
+    }
+
     public Post findForEdit(Long id) { // 수정 화면에 보여 줄 글
         Post post = findById(id);
         checkWriter(post); // ★ 추가

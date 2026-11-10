@@ -36,9 +36,17 @@ public class BoardController {
             return "board/form"; // 입력값 유지한 채 다시 글쓰기 화면
         }
     }
+    @GetMapping("/my")
+    public String myPosts(Principal principal, Model model) {
+        List<Post> posts = postService.findMyPosts(principal.getName());
+        model.addAttribute("posts", posts);
+        model.addAttribute("listTitle", "내가 쓴 글"); // list.html 제목 변경
+        return "board/list"; // 목록 화면 재사용
+    }
     @GetMapping("/{id}") // 상세 : GET /board/3 (누구나)
     public String detail(@PathVariable Long id, Model model) {
-        Post post = postService.findById(id);
+        //Post post = postService.findById(id);
+        Post post = postService.read(id);
         model.addAttribute("post", post);
         return "board/detail";
     }
