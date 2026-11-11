@@ -13,4 +13,10 @@ public class TestDB {
 
     @Column(nullable = true) // 테이블의 컬럼 설정 값을 명시
     private String name;
+
+    @Column(nullable = true)
+    private Integer age; // 나이 추가 (기존 데이터 호환을 위해 int 대신 Integer 권장)
+
+    @Column(nullable = true)
+    private String gender; // 성별 추가
 }

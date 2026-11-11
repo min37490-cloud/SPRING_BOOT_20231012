@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
+
 
 @Controller // 컨트롤러 어노테이션 명시
 public class DemoController {
@@ -36,9 +38,12 @@ public class DemoController {
 
     @GetMapping("/testdb")
     public String getAllTestDBs(Model model) {
-        TestDB test = testService.findByName("홍길동");
-        model.addAttribute("data4", test);
-        System.out.println("데이터 출력 디버그 : " + test);
+        //TestDB test = testService.findByName("홍길동");
+        //model.addAttribute("data4", test);
+        //System.out.println("데이터 출력 디버그 : " + test);
+        List<TestDB> users = testService.findAll();
+        model.addAttribute("users", users);
+        System.out.println("데이터 출력 디버그 : " + users);
         return "testdb";
     }
 }

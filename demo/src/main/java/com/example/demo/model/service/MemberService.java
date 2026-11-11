@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import com.example.demo.model.domain.Member;
 import com.example.demo.model.dto.MemberForm;
 import com.example.demo.model.repository.MemberRepository;
+import com.example.demo.model.repository.PostRepository;
+import com.example.demo.model.repository.CommentRepository;
 
 
 @Service
@@ -23,6 +25,11 @@ public class MemberService implements UserDetailsService {
     private MemberRepository memberRepository;
     @Autowired // SecurityConfig 에 등록한 BCryptPasswordEncoder 주입
     private PasswordEncoder passwordEncoder;
+    @Autowired // ① 필드 추가
+    private PostRepository postRepository;
+    @Autowired
+    private CommentRepository commentRepository;
+
     private boolean isBlank(String value) { return value == null || value.isBlank(); } // 클래스 아래쪽
     
     public Member signup(MemberForm form) { // 회원가입
@@ -92,7 +99,9 @@ public class MemberService implements UserDetailsService {
         if (member.getUsername().equals(currentUsername)) {
             throw new IllegalArgumentException("본인 계정은 삭제할 수 없습니다.");
         }
-
+        if (postRepository.existsByAuthor(member) || commentRepository.existsByAuthor(member)) {
+            throw new IllegalArgumentException("작성한 글이나 댓글이 있는 회원은 삭제할 수 없습니다.");
+        }
         memberRepository.delete(member); // DELETE
     }
     public Optional<Member> findById(Long id) {
