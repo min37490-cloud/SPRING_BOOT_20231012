@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import com.example.demo.model.domain.Member;
 import com.example.demo.model.domain.Post;
 import com.example.demo.model.dto.PostForm;
@@ -84,6 +88,12 @@ public class PostService {
         return post;
     }
 
+    // ✅ 추가: 내가 쓴 글 목록 (페이징: 10개씩, 최신순)
+    public Page<Post> getMyPosts(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "id"));
+        return postRepository.findByAuthor_Username(username, pageable);
+    }
+
     public Post findForEdit(Long id) { // 수정 화면에 보여 줄 글
         Post post = findById(id);
         checkWriter(post); // ★ 추가
@@ -101,5 +111,17 @@ public class PostService {
         Post post = findById(id);
         if (!isAdmin()) checkWriter(post); // ★ 추가 : 관리자는 누구 글이든 삭제 가능
         postRepository.delete(post); // DELETE
+    }
+    public List<Post> search(String type, String keyword) { // 👈 kw -> keyword
+        if (keyword == null || keyword.isBlank()) {
+        return findAll();
+    }
+    
+    String trimmedKw = keyword.trim();
+        if ("writer".equals(type)) { // 👈 "author" -> "writer" 로 수정
+        return postRepository.searchByAuthorName(trimmedKw);
+        } else {
+        return postRepository.searchByTitleAndContent(trimmedKw);
+        }
     }
 }

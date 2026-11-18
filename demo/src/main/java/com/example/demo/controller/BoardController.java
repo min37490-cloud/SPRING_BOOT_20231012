@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 import com.example.demo.model.domain.Post;
 import com.example.demo.model.dto.PostForm;
 import com.example.demo.model.service.CommentService;
@@ -26,13 +27,33 @@ public class BoardController {
         model.addAttribute("listTitle", "내가 쓴 글"); // list.html 제목 변경
         return "board/list"; // 목록 화면 재사용
     }*/
-    @GetMapping // 목록 : GET /board?page=0&keyword=스프링 (누구나)
+    /*@GetMapping // 목록 : GET /board?page=0&keyword=스프링 (누구나)
     public String list(@RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) String keyword, Model model) {
         Page<Post> posts = postService.findPage(keyword, page);
         model.addAttribute("posts", posts.getContent());
         model.addAttribute("page", posts);
         model.addAttribute("keyword", keyword); // 검색창에 검색어 유지, 페이지 링크에도 붙인다
+        return "board/list";
+    }*/
+    @GetMapping // 목록 : GET /board?page=0&type=titleContent&keyword=스프링 (누구나)
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "titleContent") String type, // ✅ 검색 범위 추가
+                       @RequestParam(required = false) String keyword, 
+                       Model model) {
+        
+        List<Post> posts = postService.search(type, keyword);
+        model.addAttribute("posts", posts);
+        model.addAttribute("type", type);       // ✅ 화면에서 선택 상자 선택 상태 유지
+        model.addAttribute("keyword", keyword); // 검색어 유지
+        return "board/list";
+    }
+    @GetMapping("/my")
+    public String myPosts(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
+        Page<Post> posts = postService.getMyPosts(principal.getName(), page);
+        model.addAttribute("posts", posts);
+        model.addAttribute("listTitle", "내가 쓴 글");
+        model.addAttribute("pageUrl", "/board/my"); // 페이징 링크용
         return "board/list";
     }
     @GetMapping("/write") // 글쓰기 화면 : GET /board/write (로그인 필요)
