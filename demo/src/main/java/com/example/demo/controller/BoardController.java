@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
+
 import com.example.demo.model.domain.Post;
 import com.example.demo.model.dto.PostForm;
 import com.example.demo.model.service.CommentService;
@@ -18,24 +18,10 @@ import com.example.demo.model.service.PostService;
 public class BoardController {
     @Autowired
     PostService postService;
+    
     @Autowired // ① 필드 추가 (postService 아래)
     CommentService commentService;
-    /*@GetMapping("/my")
-    public String myPosts(Principal principal, Model model) {
-        List<Post> posts = postService.findMyPosts(principal.getName());
-        model.addAttribute("posts", posts);
-        model.addAttribute("listTitle", "내가 쓴 글"); // list.html 제목 변경
-        return "board/list"; // 목록 화면 재사용
-    }*/
-    /*@GetMapping // 목록 : GET /board?page=0&keyword=스프링 (누구나)
-    public String list(@RequestParam(defaultValue = "0") int page,
-                        @RequestParam(required = false) String keyword, Model model) {
-        Page<Post> posts = postService.findPage(keyword, page);
-        model.addAttribute("posts", posts.getContent());
-        model.addAttribute("page", posts);
-        model.addAttribute("keyword", keyword); // 검색창에 검색어 유지, 페이지 링크에도 붙인다
-        return "board/list";
-    }*/
+
     @GetMapping // 목록 : GET /board?page=0&type=titleContent&keyword=스프링 (누구나)
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "titleContent") String type, // ✅ 검색 범위 추가
@@ -48,6 +34,8 @@ public class BoardController {
         model.addAttribute("keyword", keyword); // 검색어 유지
         return "board/list";
     }
+
+    // ✅ 내가 쓴 글 목록 (페이징 포함 - 하나만 유지)
     @GetMapping("/my")
     public String myPosts(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
         Page<Post> posts = postService.getMyPosts(principal.getName(), page);
@@ -56,10 +44,12 @@ public class BoardController {
         model.addAttribute("pageUrl", "/board/my"); // 페이징 링크용
         return "board/list";
     }
+
     @GetMapping("/write") // 글쓰기 화면 : GET /board/write (로그인 필요)
     public String writeForm() {
-    return "board/form";
+        return "board/form";
     }
+
     @PostMapping("/write") // 글쓰기 처리 : POST /board/write
     public String write(PostForm postForm, Principal principal, Model model) {
         try {
@@ -70,21 +60,15 @@ public class BoardController {
             return "board/form"; // 입력값 유지한 채 다시 글쓰기 화면
         }
     }
-    @GetMapping("/my")
-    public String myPosts(Principal principal, Model model) {
-        List<Post> posts = postService.findMyPosts(principal.getName());
-        model.addAttribute("posts", posts);
-        model.addAttribute("listTitle", "내가 쓴 글"); // list.html 제목 변경
-        return "board/list"; // 목록 화면 재사용
-    }
+
     @GetMapping("/{id}") // 상세 : GET /board/3 (누구나)
     public String detail(@PathVariable Long id, Model model) {
-        //Post post = postService.findById(id);
         Post post = postService.read(id);
         model.addAttribute("post", post);
         model.addAttribute("comments", commentService.findByPost(post));
         return "board/detail";
     }
+
     @GetMapping("/{id}/edit") // 수정 화면 : GET /board/3/edit
     public String editForm(@PathVariable Long id, Model model) {
         Post post = postService.findForEdit(id);

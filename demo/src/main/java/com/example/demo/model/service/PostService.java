@@ -2,6 +2,7 @@ package com.example.demo.model.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Collection;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,8 @@ public class PostService {
     private PostRepository postRepository;
     @Autowired
     private MemberRepository memberRepository;
+    @Autowired // [11주차] 단계 2 : 업로드 파일 저장소 (제공 코드)
+    private FileStore fileStore;
     private void checkWriter(Post post) { // 로그인한 사람이 글쓴이인지 → 아니면 403
         String loginUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         if (!post.getAuthor().getUsername().equals(loginUsername)) {
@@ -55,12 +58,18 @@ public class PostService {
         post.setContent(form.getContent());
         post.setAuthor(author); // 작성자는 화면이 아니라 서버가 정한다
         post.setCreatedAt(LocalDateTime.now());
+        post.setCapacity(form.getCapacity());
+        post.setPosterFile(fileStore.save(form.getPoster()));
         return postRepository.save(post); // INSERT
     }
     private void validate(PostForm form) { // 빈 값 검사 (5주차 회원가입과 같은 방식)
+        if (form.getCapacity() != null && (form.getCapacity() < 1 || form.getCapacity() > 100)) {
+            throw new IllegalArgumentException("모집 인원은 1~100명으로 입력하세요.");
+        }
         if (form.getTitle() == null || form.getTitle().isBlank()
-                || form.getContent() == null || form.getContent().isBlank()) {
-            throw new IllegalArgumentException("제목과 내용을 모두 입력하세요.");
+                || form.getContent() == null || form.getContent().isBlank()
+                || form.getCapacity() == null) {
+            throw new IllegalArgumentException("제목, 내용, 그리고 수용 인원을 모두 입력하세요.");
         }
         if (form.getTitle().trim().length() > 100) {
             throw new IllegalArgumentException("제목은 100자까지 입력할 수 있습니다.");
@@ -80,6 +89,9 @@ public class PostService {
     public Post findById(Long id) { // 글 1개 (없으면 404 → templates/error/404.html)
         return postRepository.findById(id)
                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "글이 존재하지 않습니다."));
+    }
+    public List<Post> findAllById(Collection<Long> ids) {
+        return postRepository.findAllById(ids); // SELECT ... WHERE id IN (?, ?, ?)
     }
     @Transactional
     public Post read(Long id) {
@@ -124,4 +136,5 @@ public class PostService {
         return postRepository.searchByTitleAndContent(trimmedKw);
         }
     }
+
 }
