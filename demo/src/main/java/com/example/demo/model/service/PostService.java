@@ -25,6 +25,7 @@ import com.example.demo.model.domain.Post;
 import com.example.demo.model.dto.PostForm;
 import com.example.demo.model.repository.MemberRepository;
 import com.example.demo.model.repository.PostRepository;
+import com.example.demo.model.repository.EnrollmentRepository;
 @Service // 게시판 서비스
 public class PostService {
     @Autowired
@@ -33,6 +34,8 @@ public class PostService {
     private MemberRepository memberRepository;
     @Autowired // [11주차] 단계 2 : 업로드 파일 저장소 (제공 코드)
     private FileStore fileStore;
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
     private void checkWriter(Post post) { // 로그인한 사람이 글쓴이인지 → 아니면 403
         String loginUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         if (!post.getAuthor().getUsername().equals(loginUsername)) {
@@ -122,7 +125,11 @@ public class PostService {
     public void delete(Long id) { // 글 삭제
         Post post = findById(id);
         if (!isAdmin()) checkWriter(post); // ★ 추가 : 관리자는 누구 글이든 삭제 가능
+        if (enrollmentRepository.existsByPost(post)) { // ★ 추가 : 신청자가 있으면 삭제 불가
+            throw new IllegalStateException("신청자가 있는 모집글은 삭제할 수 없습니다.");
+        }
         postRepository.delete(post); // DELETE
+        fileStore.delete(post.getPosterFile());
     }
     public List<Post> search(String type, String keyword) { // 👈 kw -> keyword
         if (keyword == null || keyword.isBlank()) {

@@ -68,4 +68,15 @@ public class CartController {
     }
     return "redirect:/cart";
     }
+    @PostMapping("/enrollments/{id}/cancel") // 신청 취소 : POST /cart/enrollments/6/cancel
+    public String cancel(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        try {
+            enrollmentService.cancel(principal.getName(), id);
+            redirect.addFlashAttribute("message", "신청이 취소되었습니다.");
+        } catch (IllegalStateException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        // AccessDeniedException(남의 것)은 잡지 않고 GlobalExceptionHandler로 넘겨 403 반환
+        return "redirect:/cart";
+    }
 }

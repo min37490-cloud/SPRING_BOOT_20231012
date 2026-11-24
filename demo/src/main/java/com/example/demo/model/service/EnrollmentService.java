@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import com.example.demo.model.domain.Enrollment;
 import com.example.demo.model.domain.Member;
 import com.example.demo.model.domain.Post;
@@ -53,6 +54,20 @@ public class EnrollmentService {
             postRepository.save(post); // ② UPDATE 신청 인원 + 1 (남은 자리 - 1)
         }
         return postIds.size();
+    }
+    @Transactional
+    public void cancel(String username, Long enrollmentId) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역이 없습니다."));
+
+        if (!enrollment.getMember().getUsername().equals(username)) {
+            throw new AccessDeniedException("본인의 신청만 취소할 수 있습니다.");
+        }
+
+        enrollmentRepository.delete(enrollment);
+
+        Post post = enrollment.getPost();
+        post.setAppliedCount(post.getAppliedCount() - 1);
     }
 }
 

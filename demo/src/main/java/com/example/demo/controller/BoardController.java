@@ -92,9 +92,19 @@ public class BoardController {
         }
     }
 
-    @PostMapping("/{id}/delete") // 삭제 처리 : POST /board/3/delete
+    /*@PostMapping("/{id}/delete") // 삭제 처리 : POST /board/3/delete
     public String delete(@PathVariable Long id) {
         postService.delete(id);
+        return "redirect:/board?deleted"; // 목록 + "삭제되었습니다"
+    }*/
+    @PostMapping("/{id}/delete") // 삭제 처리 : POST /board/3/delete
+    public String delete(@PathVariable Long id) {
+        try {
+            postService.delete(id);
+        } catch (IllegalStateException e) {
+            // 신청자가 있는 모집글 → 상세 페이지로 돌아가며 배너 ON
+            return "redirect:/board/" + id + "?deleteError";
+        }
         return "redirect:/board?deleted"; // 목록 + "삭제되었습니다"
     }
 }
