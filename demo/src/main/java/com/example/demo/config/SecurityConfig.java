@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/hello").permitAll()
                 .requestMatchers("/board", "/board/{id:\\d+}").permitAll() // 게시판 목록·상세 : 누구나
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/ws").permitAll() // [12주차] 실시간 연결 : 누구나
                 .anyRequest().authenticated())
             .formLogin(form -> form // 2. 폼 로그인 설정 (인증)
                 .loginPage("/login")
